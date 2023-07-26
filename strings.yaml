@@ -11,12 +11,12 @@ branding:
 
 # pages/categories, pages/index, partials/search
 landing:
-  tagline: One place for your organization's documents.
+  tagline: One place for all MIT Open communication and documentation.
   viewAll: View All
   quickLink: <a href="/get-started">Get Started.</a>
   modules:
     - tag: team
-      label: Find by team
+      label: Featured      # it was "Find by team"
       style: button
     - tag: featured
       label: Useful Docs
@@ -25,7 +25,7 @@ landing:
 
 # partials/footer
 footer:
-  helpText: Questions? Contact your organization's administrators.
+  helpText: Questions? Contact admin.
   defaultEmail: user@your_organization.com
   buttons:
     edit: Edit This Page
@@ -49,7 +49,7 @@ search:
 # categories/default
 folder:
   childrenList:
-    kicker: !!js/function (title) => `Pages in ${title}`
+    kicker: !!js/function (title) => `Docs in ${title}`
   # partials/sectionList
   sectionList:
     heading: "Table of Contents:"
