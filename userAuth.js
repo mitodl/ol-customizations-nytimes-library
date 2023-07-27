@@ -5,6 +5,7 @@ const session = require('express-session')
 const crypto = require('crypto')
 const GoogleStrategy = require('passport-google-oauth20')
 const SlackStrategy = require('passport-slack-oauth2').Strategy
+const touchstoneSamlStrategy = require('passport-saml').Strategy
 
 const log = require('./logger')
 const {stringTemplate: template, formatUrl} = require('./utils')
@@ -12,7 +13,7 @@ const {stringTemplate: template, formatUrl} = require('./utils')
 const router = require('express-promise-router')()
 const domains = new Set(process.env.APPROVED_DOMAINS.split(/,\s?/g))
 
-const authStrategies = ['google', 'Slack']
+const authStrategies = ['google', 'Slack', 'Touchstone']
 let authStrategy = process.env.OAUTH_STRATEGY
 
 const callbackURL = process.env.REDIRECT_URL || formatUrl('/auth/redirect')
@@ -22,6 +23,7 @@ if (!authStrategies.includes(authStrategy)) {
 }
 
 const isSlackOauth = authStrategy === 'Slack'
+const isTouchstoneSamlAuth = authStrategy === "Touchstone"
 if (isSlackOauth) {
   passport.use(new SlackStrategy({
     clientID: process.env.SLACK_CLIENT_ID,
@@ -35,6 +37,15 @@ if (isSlackOauth) {
     done(null, profile)
   }
   ))
+} else if (isTouchstoneSamlAuth){
+  passport.use(new touchstoneSamlStrategy({
+    path: callbackURL,
+    entryPoint: process.env.TOUCHSTONE_SAML_ENTRYPOINT_URL,
+    issuer: process.env.TOUCHSTONE_SAML_CERT_ISSUER,
+    cert: process.env.TOUCHSTONE_SAML_PUBLIC_CERT,
+    privateKey: process.env.TOUCHSTONE_SAML_PRIVATE_KEY,
+
+  }, (profile, done) => done(null, profile)))
 } else {
   // default to google auth
   passport.use(new GoogleStrategy.Strategy({
@@ -70,7 +81,7 @@ const googleLoginOptions = {
   prompt: 'select_account'
 }
 
-router.get('/login', passport.authenticate(authStrategy, isSlackOauth ? {} : googleLoginOptions))
+router.get('/login', passport.authenticate(authStrategy, isSlackOauth || isTouchstoneSamlAuth ? {} : googleLoginOptions))
 
 router.get('/logout', (req, res) => {
   req.logout()
@@ -119,7 +130,7 @@ function setUserInfo(req) {
     }
     return
   }
-  const email = isSlackOauth ? req.session.passport.user.email : req.session.passport.user.emails[0].value
+  const email = isSlackOauth || isTouchstoneSamlAuth ? req.session.passport.user.email : req.session.passport.user.emails[0].value
   req.userInfo = req.userInfo ? req.userInfo : {
     userId: req.session.passport.user.id,
     analyticsUserId: md5(req.session.passport.user.id + 'library'),
