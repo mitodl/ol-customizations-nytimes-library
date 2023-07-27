@@ -23,7 +23,7 @@ if (!authStrategies.includes(authStrategy)) {
 }
 
 const isSlackOauth = authStrategy === 'Slack'
-const isTouchstoneSamlAuth = authStrategy === "Touchstone"
+const isTouchstoneSamlAuth = authStrategy === 'Touchstone'
 if (isSlackOauth) {
   passport.use(new SlackStrategy({
     clientID: process.env.SLACK_CLIENT_ID,
