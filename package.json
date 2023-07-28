@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "passport-saml": "^4.0.4",
+    "passport-saml": "^4.0.4"
   }
 }
