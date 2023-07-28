@@ -15,6 +15,6 @@
   },
   "homepage": "https://github.com/mitodl/library",
   "dependencies": {
-    "passport-saml": "^4.0.4"
+    "@node-saml/passport-saml": "^4.0.4"
   }
 }
