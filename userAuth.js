@@ -43,8 +43,7 @@ if (isSlackOauth) {
     entryPoint: process.env.TOUCHSTONE_SAML_ENTRYPOINT_URL,
     issuer: process.env.TOUCHSTONE_SAML_CERT_ISSUER,
     cert: process.env.TOUCHSTONE_SAML_CERTIFICATE,
-    privateKey: process.env.TOUCHSTONE_SAML_PRIVATE_KEY,
-    decryptionPvk: process.env.TOUCHSTONE_SAML_DECRYPTION_PRIVATE_KEY
+    privateKey: process.env.TOUCHSTONE_SAML_PRIVATE_KEY
   }, (profile, done) => done(null, profile)))
 } else {
   // default to google auth
@@ -95,7 +94,7 @@ router.get('/auth/redirect', passport.authenticate(authStrategy, {failureRedirec
 router.get('/metadata', function(req, res) {
   if (isTouchstoneSamlAuth) {
     res.type('application/xml')
-    res.send((touchstoneSamlStrategy.generateServiceProviderMetadata()))
+    res.send((touchstoneSamlStrategy.generateServiceProviderMetadata(process.env.TOUCHSTONE_SAML_CERTIFICATE)))
   }
   else {
     res.redirect(formatUrl('/'))
