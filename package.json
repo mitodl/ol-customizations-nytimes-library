@@ -1,4 +1,19 @@
 {
+  "name": "mit-open-docs-library",
+  "version": "0.0.1",
+  "description": "Customizations for MIT Open docs instance",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+hhttps://github.com/mitodl/ol-customizations-nytimes-library.git"
+  },
+  "author": "Open Learning",
+  "license": "BSD 3",
+  "bugs": {
+    "url": "https://github.com/mitodl/ol-customizations-nytimes-library/issues"
+  },
+  "homepage": "https://github.com/mitodl/library",
   "dependencies": {
     "passport-saml": "^4.0.4"
   }
