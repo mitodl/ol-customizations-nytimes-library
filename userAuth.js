@@ -26,25 +26,38 @@ const isSlackOauth = authStrategy === 'Slack'
 const isTouchstoneSamlAuth = authStrategy === 'Touchstone'
 if (isSlackOauth) {
   passport.use(new SlackStrategy({
-    clientID: process.env.SLACK_CLIENT_ID,
-    clientSecret: process.env.SLACK_CLIENT_SECRET,
-    skipUserProfile: false,
-    callbackURL,
-    scope: ['identity.basic', 'identity.email', 'identity.avatar', 'identity.team', 'identity.email']
-  },
-  (accessToken, refreshToken, profile, done) => {
-    // optionally persist user data into a database
-    done(null, profile)
-  }
+      clientID: process.env.SLACK_CLIENT_ID,
+      clientSecret: process.env.SLACK_CLIENT_SECRET,
+      skipUserProfile: false,
+      callbackURL,
+      scope: ['identity.basic', 'identity.email', 'identity.avatar', 'identity.team', 'identity.email']
+    },
+    (accessToken, refreshToken, profile, done) => {
+      // optionally persist user data into a database
+      done(null, profile)
+    }
   ))
-} else if (isTouchstoneSamlAuth){
+} else if (isTouchstoneSamlAuth) {
   passport.use(new touchstoneSamlStrategy({
-    path: callbackURL,
-    entryPoint: process.env.TOUCHSTONE_SAML_ENTRYPOINT_URL,
-    issuer: process.env.TOUCHSTONE_SAML_CERT_ISSUER,
-    cert: process.env.TOUCHSTONE_SAML_CERTIFICATE,
-    privateKey: process.env.TOUCHSTONE_SAML_PRIVATE_KEY
-  }, (profile, done) => done(null, profile)))
+      callbackUrl: callbackURL,
+      entryPoint: process.env.TOUCHSTONE_SAML_ENTRYPOINT_URL,
+      issuer: process.env.TOUCHSTONE_SAML_CERT_ISSUER,
+      cert: process.env.TOUCHSTONE_SAML_CERTIFICATE,
+      privateKey: process.env.TOUCHSTONE_SAML_PRIVATE_KEY,
+      decryptionPvk: process.env.TOUCHSTONE_SAML_DECRYPTION_PRIVATE_KEY,
+      wantAssertionsSigned: true,
+      metadataOrganization: {
+        OrganizationName: {'#text': process.env.TOUCHSTONE_SAML_ORG_NAME},
+        OrganizationDisplayName: {'#text': process.env.TOUCHSTONE_SAML_ORG_DISPLAY_NAME},
+        OrganizationURL: {'#text': process.env.TOUCHSTONE_SAML_ORG_URL}
+      },
+      metadataContactPerson: [{
+        '@contactType': 'support',
+        GivenName: process.env.TOUCHSTONE_SAML_CONTACT_NAME,
+        EmailAddress: process.env.TOUCHSTONE_SAML_CONTACT_EMAIL
+      }]
+    },
+    (profile, done) => done(null, profile)))
 } else {
   // default to google auth
   passport.use(new GoogleStrategy.Strategy({
@@ -91,12 +104,14 @@ router.get('/auth/redirect', passport.authenticate(authStrategy, {failureRedirec
   res.redirect(req.session.authRedirect || formatUrl('/'))
 })
 
-router.get('/metadata', function(req, res) {
+router.get('/metadata', function (req, res) {
   if (isTouchstoneSamlAuth) {
     res.type('application/xml')
-    res.send((touchstoneSamlStrategy.generateServiceProviderMetadata(process.env.TOUCHSTONE_SAML_CERTIFICATE)))
-  }
-  else {
+    res.send((touchstoneSamlStrategy.generateServiceProviderMetadata(
+      process.env.TOUCHSTONE_SAML_MD_DECRYPTION_CERT,
+      process.env.TOUCHSTONE_SAML_MD_SIGNING_CERT
+    )))
+  } else {
     res.redirect(formatUrl('/'))
   }
 })
