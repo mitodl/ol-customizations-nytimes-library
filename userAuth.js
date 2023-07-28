@@ -12,6 +12,8 @@ const {stringTemplate: template, formatUrl} = require('./utils')
 
 const router = require('express-promise-router')()
 const domains = new Set(process.env.APPROVED_DOMAINS.split(/,\s?/g))
+const samlDecryptionPrivateKey = process.env.TOUCHSTONE_SAML_PRIVATE_KEY
+const samlDecryptionPublicCert = process.env.TOUCHSTONE_SAML_PUBLIC_CERT
 
 const authStrategies = ['google', 'Slack', 'Touchstone']
 let authStrategy = process.env.OAUTH_STRATEGY
@@ -42,9 +44,8 @@ if (isSlackOauth) {
     path: callbackURL,
     entryPoint: process.env.TOUCHSTONE_SAML_ENTRYPOINT_URL,
     issuer: process.env.TOUCHSTONE_SAML_CERT_ISSUER,
-    cert: process.env.TOUCHSTONE_SAML_PUBLIC_CERT,
-    privateKey: process.env.TOUCHSTONE_SAML_PRIVATE_KEY,
-
+    cert: samlDecryptionPublicCert,
+    privateKey: samlDecryptionPrivateKey,
   }, (profile, done) => done(null, profile)))
 } else {
   // default to google auth
@@ -90,6 +91,16 @@ router.get('/logout', (req, res) => {
 
 router.get('/auth/redirect', passport.authenticate(authStrategy, {failureRedirect: formatUrl('/login')}), (req, res) => {
   res.redirect(req.session.authRedirect || formatUrl('/'))
+})
+
+router.get('/metadata', function(req, res) {
+  if (isTouchstoneSamlAuth) {
+    res.type('application/xml')
+    res.send((touchstoneSamlStrategy.generateServiceProviderMetadata(samlDecryptionPublicCert)))
+  }
+  else {
+    res.redirect(formatUrl('/'))
+  }
 })
 
 router.use((req, res, next) => {
